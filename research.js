@@ -50,39 +50,11 @@ async function getScopes() {
 }
 
 
-let bot = {};
-bot.name        = '0.3/0.3'
-bot.exchLeft    = binance;
-bot.exchRigh    = wavesdex;
-bot.stage       = 0; 
-bot.disbalLeft  =0.3;
-bot.disbalRigh  =0.3;
-bot.rateLeft    = 1;
-bot.rateRigh    = 1;
-bot.amount      = 100;
 let bots        = [];
-bots[0]         = bot;
-bot.name        = '0.5'
-bot.disbalLeft  =0.5;
-bot.disbalRigh  =0.5;
-bots[1]         = bot;
-bot.name        = '0.7'
-bot.disbalLeft  =0.7;
-bot.disbalRigh  =0.7;
-bots[2]         = bot;
-bot.name        = '0.9'
-bot.disbalLeft  =0.9;
-bot.disbalRigh  =0.9;
-bots[3]         = bot;
-bot.name        = '0.4'
-bot.disbalLeft  =0.4;
-bot.disbalRigh  =0.4;
-bots[4]         = bot;
-bot.name        = '0.4'
-bot.disbalLeft  =0.4;
-bot.disbalRigh  =0.4;
-bots[5]         = bot;
-
+bots.push({name: '0.3', stage: 0, disbalLeft: 0.3, disbalRigh: 0.3, rateLeft: 1, rateRigh: 1, amount: 100});
+bots.push({name: '0.5', stage: 0, disbalLeft: 0.5, disbalRigh: 0.5, rateLeft: 1, rateRigh: 1, amount: 100});
+bots.push({name: '0.7', stage: 0, disbalLeft: 0.7, disbalRigh: 0.7, rateLeft: 1, rateRigh: 1, amount: 100});
+bots.push({name: '0.9', stage: 0, disbalLeft: 0.9, disbalRigh: 0.9, rateLeft: 1, rateRigh: 1, amount: 100}); 
 let botsAmount  = 100;
 let research    = [];
 research[0]     = {};
@@ -97,11 +69,12 @@ async function setRate() {
     console.log(`USDT/USDN: ${parseFloat((market.avgPrice)/100).toFixed(4)} `);
     return parseFloat(market.avgPrice)/100;
 }
-async function handleBot(ind) {
-    if (bots[ind].stage == 0) { // looking for scope
+async function handleBot(ind, scope) {
+    if (bots[ind].stage == 0) { // 
+        //console.log(ind, scope.sell, bots[ind].disbalLeft, bots[ind].disbalRigh);
         if (scope.sell > bots[ind].disbalLeft) { // ready to sell from left and buy to right
-            console.log('Sell deal');
-            research[ind].start = new Date();
+            console.log('Sell deal' + bots[ind].name);
+            research[ind].start = Date.now();
             research[ind].name  = bots[ind].name;
             bots[ind].stage   = 1;
         }
@@ -109,7 +82,7 @@ async function handleBot(ind) {
     if (bots[ind].stage == 1) { // looking for scope to sell from right and buy to left 
         if (scope.buy > bots[ind].disbalRigh) { // ready to sell  from right and buy to left
             bots[ind].stage               = 0;
-            console.log('Buy deal');
+            console.log('Buy deal' + bots[ind].name);
             await db.addResearch(research[ind]);
         }
     }
@@ -118,15 +91,17 @@ async function handleBot(ind) {
 
 let round = 0; 
 let rate  = 0;
+let testScope = [{buy: 0, sell: 0.5}, {buy: 0.5, sell: 0}];
 async function botLoop() { 
 
     while(true) {
         if ((round % 25) == 0) { rate = await setRate(); console.log(rate); }
-        scope = await getScopes(); 
+        scope = await getScopes();
+        //scope = testScope[round]; 
         console.log(`Round: ${round} || ${func.nowTime()} || Scope: sell: ${scope.sell.toFixed(4)} || Scope: buy: ${scope.buy.toFixed(4)} `);
 
         for (var i = 0; i < bots.length; i++ ){
-            await handleBot(i);
+            await handleBot(i, scope);
             await func.sleep(1000);
         }
 

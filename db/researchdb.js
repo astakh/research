@@ -12,7 +12,7 @@ const Schema = mongoose.Schema;
 
 const researchSchema = new Schema ({
         name:   { type: String, },
-        start:  { type: String, },
+        start:  { type: Number, },
         time:   { type: Number, },
     }, {timestamps: true});
     const Research = mongoose.model('Research', researchSchema); 
@@ -20,8 +20,8 @@ const researchSchema = new Schema ({
     async function addResearch(research) {
     let r = new Research({
         name:   research.name,
-        start:  research.start.toISOString(),
-        time:   (new Date() - research.start) / 10000 / 60 / 60,
+        start:  research.start,
+        time:   (Date.now() - research.start) / 10000 / 60 / 60,
     }); 
     console.log(r)
     await r.save();
